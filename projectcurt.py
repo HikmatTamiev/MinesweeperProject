@@ -18,7 +18,7 @@ class MinesweeperGame:
         self.mines_count = 25
         self.revealed_count = 0
         self.game_over = False
-        
+        self.firstclick = True
         self.logic_board = []
         for r in range(self.rows):
             new_row = []
@@ -34,8 +34,6 @@ class MinesweeperGame:
             self.buttons.append(row_list)
         
         self.create_grid()
-        self.place_mines()
-        self.count_neighbors()
 
     def create_grid(self):
         self.game_frame = tk.Frame(self.master)
@@ -49,10 +47,12 @@ class MinesweeperGame:
                 bttn.grid(row=r, column=c)
                 self.buttons[r][c] = bttn
 
-    def place_mines(self):
+    def place_mines(self, firstr, firstc):
         all_positions = []
         for r in range(self.rows):
             for c in range(self.cols):
+                if r == firstr and c == firstc:
+                    continue
                 all_positions.append([r,c])
         self.mine_locations = random.sample(all_positions, self.mines_count)
         for r, c in self.mine_locations:
@@ -74,16 +74,48 @@ class MinesweeperGame:
                 self.logic_board[r][c] = mine_sum
 
     def handle_reveal(self, r, c):
+        if self.buttons[r][c]["state"] == "disabled":
+            value = self.logic_board[r][c]
+            if value != "M" and value > 0:
+                self.reveal_non_flags(r, c, value)
+            return
+        
         if self.buttons[r][c]['text'] == "F":
-            returnc
+            return
+        
+        if self.firstclick:
+            self.firstclick = False
+            self.place_mines(r, c)
+            self.count_neighbors()
 
         if self.logic_board[r][c] == "M":
             self.show_all_mines()
             self.end_game("You hit a mine! You Lost.")
         else:
             self.reveal_area(r, c)
-            if self.revealed_count == 119:
+            if self.revealed_count == (self.rows * self.cols) - self.mines_count:
                 self.end_game("You revealed all safe cells! You Win!")
+
+    def reveal_non_flags(self, r, c, value):
+        flag_count = 0
+        for surroundingrow in [-1, 0, 1]:
+            for surroundingcol in [-1, 0, 1]:
+                nr, nc = r + surroundingrow, c + surroundingcol
+                if 0 <= nr < self.rows and 0 <= nc < self.cols:
+                    if self.buttons[nr][nc]["text"] == "F":
+                        flag_count += 1
+        if flag_count == value:
+            for surroundingrow in [-1, 0, 1]:
+                for surroundingcol in [-1, 0, 1]:
+                    nr, nc = r + surroundingrow, c + surroundingcol
+                    if 0 <= nr < self.rows and 0 <= nc < self.cols:
+                        if self.buttons[nr][nc]["text"] != "F" and self.buttons[nr][nc]["state"] != "disabled":
+                            if self.logic_board[nr][nc] == "M":
+                                self.show_all_mines()
+                                self.end_game("Wrong placement of flags! you hit a mine.")
+                                return
+                            else:
+                                self.reveal_area(nr, nc)
 
     def reveal_area(self, r, c):
         bttn = self.buttons[r][c]
