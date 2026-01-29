@@ -4,15 +4,25 @@ from tkinter import messagebox
 import sys
 
 class MinesweeperGame:
+    """A class to represent the Minesweeper game logic and GUI.
+    
+    Attributes:
+        master (tk.Tk): The root window of the application.
+        rows (int): Number of rows in the grid.
+        cols (int): Number of columns in the grid.
+        mines_count (int): Total number of mines to be placed."""
     def __init__(self, master):
+        """Initializes the game window and starts the first game instance."""
         self.master = master
         self.master.title("Minesweeper")
         self.start_game()
 
     def quit_app(self):
+        """Closes the game."""
         sys.exit()
 
     def start_game(self):
+        """Sets initial game state variables and creates the logic board."""
         self.rows = 12
         self.cols = 12
         self.mines_count = 25
@@ -36,6 +46,7 @@ class MinesweeperGame:
         self.create_grid()
 
     def create_grid(self):
+        """Generates the Tkinter button grid and binds mouse events."""
         self.game_frame = tk.Frame(self.master)
         self.game_frame.pack(padx=20, pady=20)
 
@@ -48,6 +59,7 @@ class MinesweeperGame:
                 self.buttons[r][c] = bttn
 
     def place_mines(self, firstr, firstc):
+        """Randomly places mines on the logic board after the first click"""
         all_positions = []
         for r in range(self.rows):
             for c in range(self.cols):
@@ -59,6 +71,7 @@ class MinesweeperGame:
             self.logic_board[r][c] = "M"
 
     def count_neighbors(self):
+        """Calculates the number of adjacent mines for every safe cell."""
         for r in range(self.rows):
             for c in range(self.cols):
                 if self.logic_board[r][c] == "M":
@@ -74,6 +87,7 @@ class MinesweeperGame:
                 self.logic_board[r][c] = mine_sum
 
     def handle_reveal(self, r, c):
+        """Handles the logic when a cell is clicked."""
         if self.buttons[r][c]["state"] == "disabled":
             value = self.logic_board[r][c]
             if value != "M" and value > 0:
@@ -97,6 +111,7 @@ class MinesweeperGame:
                 self.end_game("You revealed all safe cells! You Win!")
 
     def reveal_non_flags(self, r, c, value):
+        """Reveals neighbors if the number of flags matches the cell value."""
         flag_count = 0
         for surroundingrow in [-1, 0, 1]:
             for surroundingcol in [-1, 0, 1]:
@@ -118,6 +133,7 @@ class MinesweeperGame:
                                 self.reveal_area(nr, nc)
 
     def reveal_area(self, r, c):
+        """Recursively reveals empty areas (0-neighbor cells)."""
         bttn = self.buttons[r][c]
         if bttn['state'] == 'disabled':
             return
@@ -136,6 +152,7 @@ class MinesweeperGame:
                         self.reveal_area(nr, nc)
 
     def handle_flag(self, r, c):
+        """Toggles a flag 'F' on right-click to mark potential mines."""
         bttn = self.buttons[r][c]
         if bttn['state'] == 'disabled':
             return
@@ -146,10 +163,12 @@ class MinesweeperGame:
             bttn.config(text="F", fg="red")
 
     def show_all_mines(self):
+        """Reveals all mine locations when the game is lost."""
         for r, c in self.mine_locations:
             self.buttons[r][c].config(text="M", bg="red")
 
     def end_game(self, message):
+        """Displays the win/loss message and handles restart logic."""
         self.game_over = True
         if messagebox.askyesno("Game Over", f"{message}\n\nDo you want to play again?"):
             self.restart()
@@ -157,6 +176,7 @@ class MinesweeperGame:
             self.quit_app()
 
     def restart(self):
+        """Clears the board and starts a new game."""
         for widget in self.master.winfo_children():
             widget.destroy()
         self.start_game()
