@@ -107,8 +107,7 @@ class MinesweeperGame:
             self.end_game("You hit a mine! You Lost.")
         else:
             self.reveal_area(r, c)
-            if self.revealed_count == (self.rows * self.cols) - self.mines_count:
-                self.end_game("You revealed all safe cells! You Win!")
+            self.check_win()
 
     def reveal_non_flags(self, r, c, value):
         """Reveals neighbors if the number of flags matches the cell value."""
@@ -131,11 +130,12 @@ class MinesweeperGame:
                                 return
                             else:
                                 self.reveal_area(nr, nc)
+            self.check_win()
 
     def reveal_area(self, r, c):
         """Recursively reveals empty areas (0-neighbor cells)."""
         bttn = self.buttons[r][c]
-        if bttn['state'] == 'disabled':
+        if bttn['state'] == 'disabled' or bttn['text'] == "F":
             return
 
         value = self.logic_board[r][c]
@@ -161,6 +161,12 @@ class MinesweeperGame:
             bttn.config(text="")
         else:
             bttn.config(text="F", fg="red")
+            
+    def check_win(self):
+        """Checks if the player has revealed all non-mine cells."""
+        safe_cells = (self.rows * self.cols) - self.mines_count
+        if self.revealed_count == safe_cells and not self.game_over:
+            self.end_game("You revealed all safe cells! You Win!")
 
     def show_all_mines(self):
         """Reveals all mine locations when the game is lost."""
